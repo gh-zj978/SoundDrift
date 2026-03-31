@@ -217,12 +217,14 @@ class MediaProjectionService : Service() {
                             val jsonString = parts.subList(1, parts.size).joinToString("|")
                             try {
                                 val deviceInfo = JSONObject(jsonString)
-                                val newDeviceName = deviceInfo.getString("deviceName")
                                 val newClientIP = receivePacket.address.hostAddress ?: ""
+                                val newDeviceName = deviceInfo.getString("deviceName")
                                 
-                                // Allow reconnection from same or different client
-                                if (connectedClientIP.isNotEmpty() && connectedClientIP != newClientIP) {
-                                    println("New client connecting, disconnecting previous: $connectedClientIP")
+                                // 限定只允許本機連線
+                                val clientAddress = receivePacket.address
+                                if (!clientAddress.isLoopbackAddress) {
+                                    println("Rejected non-local client: $newClientIP")
+                                    continue  // 跳過這次，不設定 IP
                                 }
                                 
                                 connectedClientDeviceName = newDeviceName
